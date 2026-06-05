@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:remindx/pages/home_page.dart';
+import 'package:remindx/router/router.dart';
+import 'package:go_router/go_router.dart';
 
 void main() {
-  runApp(const MyApp());
+  final appRouter = RouterClass().router;
+  runApp(MyApp(router: appRouter));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final GoRouter router;
+
+  const MyApp({super.key, required this.router});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'remindX',
-      home: HomePage(),
+      routerConfig: router,
     );
   }
 }
