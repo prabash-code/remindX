@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 class TaskContainer extends StatelessWidget {
-  const TaskContainer({super.key});
+  const TaskContainer({super.key, required this.task});
+  final String task;
 
   @override
   Widget build(BuildContext context) {
@@ -14,6 +15,10 @@ class TaskContainer extends StatelessWidget {
           width: 2,
         ),
         borderRadius: BorderRadius.circular(15),
+      ),
+      child: Text(
+        task,
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
       ),
     );
   }

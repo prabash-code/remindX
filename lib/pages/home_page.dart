@@ -1,9 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:remindx/api/voice_to_text.dart';
 import 'package:remindx/widgets/task_container.dart';
 import 'package:remindx/widgets/bottom_bar.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
+  List<String> reminders = [];
+  bool isListening = false;
+  String currentText = "";
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,16 +59,48 @@ class HomePage extends StatelessWidget {
           children: [
             const SizedBox(height: 30),
 
-            // Mic Button
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                color: const Color.fromARGB(255, 33, 37, 243),
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
+            Center(
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // 🔵 Animated rotating ring (ONLY when speaking)
+                  if (isListening)
+                    RotationTransition(
+                      turns: _controller,
+                      child: Container(
+                        width: 160,
+                        height: 160,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.cyanAccent,
+                            width: 4,
+                          ),
+                          boxShadow: [
+                            BoxShadow(blurRadius: 20, spreadRadius: 5),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                  GestureDetector(
+                    onTap: toggleRecording,
+                    child: Container(
+                      width: 120,
+                      height: 120,
+                      decoration: const BoxDecoration(
+                        color: Color.fromARGB(255, 33, 37, 243),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        isListening ? Icons.mic : Icons.mic_none,
+                        size: 60,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              child: const Icon(Icons.mic, color: Colors.white, size: 60),
             ),
 
             const SizedBox(height: 30),
@@ -75,15 +134,17 @@ class HomePage extends StatelessWidget {
               'Your voice reminder app',
               style: TextStyle(fontSize: 18, color: Colors.grey[600]),
             ),
-            const TaskContainer(),
-            SizedBox(height: 20),
-            const TaskContainer(),
-            SizedBox(height: 20),
-            const TaskContainer(),
-            SizedBox(height: 20),
-            const TaskContainer(),
-            SizedBox(height: 20),
-            const TaskContainer(),
+
+            Column(
+              children: reminders
+                  .map(
+                    (reminder) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: TaskContainer(task: reminder),
+                    ),
+                  )
+                  .toList(),
+            ),
 
             const SizedBox(height: 30),
           ],
@@ -113,5 +174,34 @@ class HomePage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> toggleRecording() async {
+    if (!isListening) {
+      setState(() {
+        currentText = "";
+        isListening = true;
+      });
+      _controller.repeat(); // start animation
+
+      await SpeechService.startListening(
+        onResult: (text) {
+          setState(() {
+            currentText = text;
+          });
+        },
+      );
+    } else {
+      await SpeechService.stopListening();
+      _controller.stop();
+
+      setState(() {
+        isListening = false;
+
+        if (currentText.trim().isNotEmpty) {
+          reminders.add(currentText);
+        }
+      });
+    }
   }
 }
