@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:remindx/router/router.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
-void main() {
+void main() async {
   final appRouter = RouterClass().router;
+  WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
+  await Hive.openBox('reminders');
   runApp(MyApp(router: appRouter));
 }
 

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:remindx/api/voice_to_text.dart';
 import 'package:remindx/widgets/task_container.dart';
 import 'package:remindx/widgets/bottom_bar.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -11,14 +13,16 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
-  List<String> reminders = [];
   bool isListening = false;
   String currentText = "";
+  late Box remindersBox;
   late AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
+
+    remindersBox = Hive.box('reminders');
 
     _controller = AnimationController(
       vsync: this,
@@ -63,7 +67,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  // 🔵 Animated rotating ring (ONLY when speaking)
                   if (isListening)
                     RotationTransition(
                       turns: _controller,
@@ -136,7 +139,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
 
             Column(
-              children: reminders
+              children: remindersBox.values
                   .map(
                     (reminder) => Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -199,7 +202,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         isListening = false;
 
         if (currentText.trim().isNotEmpty) {
-          reminders.add(currentText);
+          remindersBox.add(currentText);
         }
       });
     }
